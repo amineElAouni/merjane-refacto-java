@@ -74,13 +74,10 @@ class ProductTests {
 
         @Test
         void isRestockedAfterSeasonEndWhenLeadTimeGoesPastTheLastDay() {
-            Product product = seasonalProduct(TODAY.minusDays(1), TODAY.plusDays(10));
+            LocalDate seasonEnd = TODAY.plusDays(10);
 
-            product.setLeadTime(11);
-            assertThat(product.isRestockedAfterSeasonEnd(TODAY)).isTrue();
-
-            product.setLeadTime(10);
-            assertThat(product.isRestockedAfterSeasonEnd(TODAY)).isFalse();
+            assertThat(seasonalProduct(11, TODAY.minusDays(1), seasonEnd).isRestockedAfterSeasonEnd(TODAY)).isTrue();
+            assertThat(seasonalProduct(10, TODAY.minusDays(1), seasonEnd).isRestockedAfterSeasonEnd(TODAY)).isFalse();
         }
     }
 
@@ -126,7 +123,11 @@ class ProductTests {
     }
 
     private static Product seasonalProduct(LocalDate seasonStartDate, LocalDate seasonEndDate) {
-        return new Product(null, 15, 30, "SEASONAL", "Watermelon", null, seasonStartDate, seasonEndDate);
+        return seasonalProduct(15, seasonStartDate, seasonEndDate);
+    }
+
+    private static Product seasonalProduct(int leadTime, LocalDate seasonStartDate, LocalDate seasonEndDate) {
+        return new Product(null, leadTime, 30, "SEASONAL", "Watermelon", null, seasonStartDate, seasonEndDate);
     }
 
     private static Product expirableProduct(LocalDate expiryDate) {
