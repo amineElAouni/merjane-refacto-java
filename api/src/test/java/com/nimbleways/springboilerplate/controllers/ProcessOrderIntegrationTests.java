@@ -1,5 +1,6 @@
 package com.nimbleways.springboilerplate.controllers;
 
+import static com.nimbleways.springboilerplate.utils.FixedClockConfiguration.TODAY;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
@@ -14,6 +15,7 @@ import com.nimbleways.springboilerplate.entities.Product;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 import com.nimbleways.springboilerplate.services.implementations.NotificationService;
+import com.nimbleways.springboilerplate.utils.FixedClockConfiguration;
 
 import java.time.LocalDate;
 import java.util.LinkedHashSet;
@@ -28,14 +30,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.web.servlet.MockMvc;
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@Import(FixedClockConfiguration.class)
 @DisplayName("POST /orders/{orderId}/processOrder")
 class ProcessOrderIntegrationTests {
 
-    private static final LocalDate TODAY = LocalDate.now();
     private static final long UNKNOWN_ORDER_ID = 999_999L;
 
     @Autowired

@@ -7,6 +7,7 @@ import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
 import com.nimbleways.springboilerplate.services.implementations.ProductService;
 
+import java.time.Clock;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +33,9 @@ public class MyController {
     @Autowired
     private OrderRepository or;
 
+    @Autowired
+    private Clock clock;
+
     @PostMapping("{orderId}/processOrder")
     @ResponseStatus(HttpStatus.OK)
     public ProcessOrderResponse processOrder(@PathVariable Long orderId) {
@@ -53,7 +57,7 @@ public class MyController {
                 }
             } else if (p.getType().equals("SEASONAL")) {
                 // Add new season rules
-                if ((LocalDate.now().isAfter(p.getSeasonStartDate()) && LocalDate.now().isBefore(p.getSeasonEndDate())
+                if ((LocalDate.now(clock).isAfter(p.getSeasonStartDate()) && LocalDate.now(clock).isBefore(p.getSeasonEndDate())
                         && p.getAvailable() > 0)) {
                     p.setAvailable(p.getAvailable() - 1);
                     pr.save(p);
@@ -61,7 +65,7 @@ public class MyController {
                     ps.handleSeasonalProduct(p);
                 }
             } else if (p.getType().equals("EXPIRABLE")) {
-                if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now())) {
+                if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now(clock))) {
                     p.setAvailable(p.getAvailable() - 1);
                     pr.save(p);
                 } else {
