@@ -44,29 +44,25 @@ public class MyController {
         List<Long> ids = new ArrayList<>();
         ids.add(orderId);
         Set<Product> products = order.getItems();
+        LocalDate today = LocalDate.now(clock);
         for (Product p : products) {
             if (p.getType().equals("NORMAL")) {
-                if (p.getAvailable() > 0) {
-                    p.setAvailable(p.getAvailable() - 1);
+                if (p.isInStock()) {
+                    p.decrementStock();
                     pr.save(p);
-                } else {
-                    int leadTime = p.getLeadTime();
-                    if (leadTime > 0) {
-                        ps.notifyDelay(leadTime, p);
-                    }
+                } else if (p.hasLeadTime()) {
+                    ps.notifyDelay(p.getLeadTime(), p);
                 }
             } else if (p.getType().equals("SEASONAL")) {
-                // Add new season rules
-                if ((LocalDate.now(clock).isAfter(p.getSeasonStartDate()) && LocalDate.now(clock).isBefore(p.getSeasonEndDate())
-                        && p.getAvailable() > 0)) {
-                    p.setAvailable(p.getAvailable() - 1);
+                if (p.isInSeason(today) && p.isInStock()) {
+                    p.decrementStock();
                     pr.save(p);
                 } else {
                     ps.handleSeasonalProduct(p);
                 }
             } else if (p.getType().equals("EXPIRABLE")) {
-                if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now(clock))) {
-                    p.setAvailable(p.getAvailable() - 1);
+                if (p.isInStock() && !p.isExpired(today)) {
+                    p.decrementStock();
                     pr.save(p);
                 } else {
                     ps.handleExpiredProduct(p);

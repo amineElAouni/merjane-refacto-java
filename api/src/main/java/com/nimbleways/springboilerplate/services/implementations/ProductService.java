@@ -28,11 +28,12 @@ public class ProductService {
     }
 
     public void handleSeasonalProduct(Product p) {
-        if (LocalDate.now(clock).plusDays(p.getLeadTime()).isAfter(p.getSeasonEndDate())) {
+        LocalDate today = LocalDate.now(clock);
+        if (p.isRestockedAfterSeasonEnd(today)) {
             ns.sendOutOfStockNotification(p.getName());
-            p.setAvailable(0);
+            p.emptyStock();
             pr.save(p);
-        } else if (p.getSeasonStartDate().isAfter(LocalDate.now(clock))) {
+        } else if (p.isBeforeSeason(today)) {
             ns.sendOutOfStockNotification(p.getName());
             pr.save(p);
         } else {
@@ -41,12 +42,12 @@ public class ProductService {
     }
 
     public void handleExpiredProduct(Product p) {
-        if (p.getAvailable() > 0 && p.getExpiryDate().isAfter(LocalDate.now(clock))) {
-            p.setAvailable(p.getAvailable() - 1);
+        if (p.isInStock() && !p.isExpired(LocalDate.now(clock))) {
+            p.decrementStock();
             pr.save(p);
         } else {
             ns.sendExpirationNotification(p.getName(), p.getExpiryDate());
-            p.setAvailable(0);
+            p.emptyStock();
             pr.save(p);
         }
     }
