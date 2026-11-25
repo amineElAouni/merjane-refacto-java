@@ -5,7 +5,7 @@ import com.nimbleways.springboilerplate.entities.Order;
 import com.nimbleways.springboilerplate.entities.Product;
 import com.nimbleways.springboilerplate.repositories.OrderRepository;
 import com.nimbleways.springboilerplate.repositories.ProductRepository;
-import com.nimbleways.springboilerplate.services.implementations.ProductService;
+import com.nimbleways.springboilerplate.services.handlers.ProductOrderHandlerRegistry;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/orders")
 public class MyController {
     @Autowired
-    private ProductService ps;
+    private ProductOrderHandlerRegistry handlers;
 
     @Autowired
     private ProductRepository pr;
@@ -46,28 +46,10 @@ public class MyController {
         Set<Product> products = order.getItems();
         LocalDate today = LocalDate.now(clock);
         for (Product p : products) {
-            if (p.getType().equals("NORMAL")) {
-                if (p.isInStock()) {
-                    p.decrementStock();
-                    pr.save(p);
-                } else if (p.hasLeadTime()) {
-                    ps.notifyDelay(p.getLeadTime(), p);
-                }
-            } else if (p.getType().equals("SEASONAL")) {
-                if (p.isInSeason(today) && p.isInStock()) {
-                    p.decrementStock();
-                    pr.save(p);
-                } else {
-                    ps.handleSeasonalProduct(p);
-                }
-            } else if (p.getType().equals("EXPIRABLE")) {
-                if (p.isInStock() && !p.isExpired(today)) {
-                    p.decrementStock();
-                    pr.save(p);
-                } else {
-                    ps.handleExpiredProduct(p);
-                }
-            }
+            handlers.handlerFor(p).ifPresent(handler -> {
+                handler.handle(p, today);
+                pr.save(p);
+            });
         }
 
         return new ProcessOrderResponse(order.getId());
